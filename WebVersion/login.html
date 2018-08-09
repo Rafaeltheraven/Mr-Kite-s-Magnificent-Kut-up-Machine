@@ -1,0 +1,25 @@
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Mr Kite's Magnificent Kut-up Machine</title>
+  <meta name="description" content="Mr Kite's Magnificent Kut-up Machine">
+  <meta name="author" content="Rafaeltheraven">
+
+  <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+  <script type="text/javascript">
+    let scopes = 'user-library-read playlist-read-private playlist-read-collaborative user-read-currently-playing user-modify-playback-state streaming app-remote-control user-read-playback-state user-read-email user-read-birthdate user-read-private';
+    let redirect_uri = "http://localhost/MKMKM.html";
+    let my_client_id = "181465e8eeda4e5ebcae643f5c37e3e4";
+    window.onload = window.location.replace('https://accounts.spotify.com/authorize' +
+      '?client_id=' + my_client_id +
+      '&redirect_uri=' + encodeURI(redirect_uri) +
+      '&scope=' + encodeURIComponent(scopes) +
+      '&response_type=token');
+  </script>
+</body>
+</html>
