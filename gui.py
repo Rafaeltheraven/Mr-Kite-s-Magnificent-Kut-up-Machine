@@ -32,6 +32,7 @@ class GUI(QWidget):
 			self.directory = ""
 			self.originalDirectory = ""
 		self.rescan = False
+		self.resultFile = ""
 		self.snip = SnipSnap()
 		self.snip.NoMusicFoundSignal.connect(self.noMusicWarning)
 		self.snip.MissingDependencySignal.connect(self.dependencyWarning)
@@ -63,6 +64,12 @@ class GUI(QWidget):
 		checkbox = QCheckBox("Rescan?", self)
 		checkbox.stateChanged.connect(self.rescanBox)
 
+		btn4 = QPushButton('Save Result', self)
+		btn4.setToolTip("Save the resulting audio into a single audio file of your choice.")
+		btn4.resize(btn4.sizeHint())
+
+		btn4.clicked.connect(self.resultSelect)
+
 		self.segmentSlider = QSlider(Qt.Horizontal, self)
 		self.segmentSlider.setMinimum(5)
 		self.segmentSlider.setMaximum(50)
@@ -81,7 +88,8 @@ class GUI(QWidget):
 
 		self.layout.addWidget(btn2, 1, 0)
 		self.layout.addWidget(checkbox, 1, 1)
-		self.layout.addWidget(self.dirLabel, 2, 0, 1, 2)
+		self.layout.addWidget(self.dirLabel, 2, 0)
+		self.layout.addWidget(btn4, 2, 1)
 		self.layout.addWidget(btn1, 3, 0)
 		self.layout.addWidget(btn3, 3, 1)
 		self.layout.addWidget(self.playLabel, 4, 0, 1, 2)
@@ -103,7 +111,6 @@ class GUI(QWidget):
 		self.show()
 
 	def center(self):
-
 		qr = self.frameGeometry()
 		cp = QDesktopWidget().availableGeometry().center()
 		qr.moveCenter(cp)
@@ -122,6 +129,10 @@ class GUI(QWidget):
 				pickle.dump(temp, fp)
 			self.dirLabel.setText(temp)
 
+	def resultSelect(self):
+		options = QFileDialog.Options()
+		self.resultFile, _ = QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()","","All Files (*);;MP3 Files (*.mp3);;FLAC Files (*.flac)", options=options)
+
 
 	def startMachine(self):
 		print("Gonna start with directory: " + self.directory)
@@ -129,7 +140,7 @@ class GUI(QWidget):
 			self.rescan = True
 		if self.directory != "":
 			self.playLabel.setText("Scanning music folder")
-			scannerThread = Thread(target=self.snip.start, args=(self.directory, self.rescan, self.probabilities, self.segmentSlider.value(), self,))
+			scannerThread = Thread(target=self.snip.start, args=(self.directory, self.rescan, self.probabilities, self.segmentSlider.value(), self.resultFile, self,))
 			scannerThread.start()
 		else:
 			QMessageBox.about(self, "Error", "You haven't selected your music directory")

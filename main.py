@@ -21,6 +21,8 @@ class SnipSnap(QtCore.QObject):
 		self.audioFileBuffer = []
 		self.clip_duration = 10
 		self.playing = True
+		self.resultFile = ""
+		self.resultAudioObject = AudioSegment.empty()
 
 	def playAudio(self, GUI):
 		i = 0
@@ -31,8 +33,17 @@ class SnipSnap(QtCore.QObject):
 				bufferThread.start()
 			print("Playing next track")
 			play(self.audioFileBuffer[i])
+			if self.resultFile != "":
+				self.resultAudioObject += self.audioFileBuffer[i]
 			i += 1
+		if self.resultFile != "":
+			GUI.playLabel.setText("Writing to disk...")
+			self.writeToDisk()
 		GUI.playLabel.setText("Stopped")
+
+	def writeToDisk(self):
+		fileFormat = os.path.splitext(self.resultFile)[1]
+		self.resultAudioObject.export(r'' + self.resultFile, format=fileFormat[1:])
 
 	def readFiles(self, folderPath):
 		result = []
@@ -125,11 +136,14 @@ class SnipSnap(QtCore.QObject):
 		return track
 
 
-	def start(self, MUSIC_FOLDER, rescan, probabilities, segmentDuration, GUI):
+	def start(self, MUSIC_FOLDER, rescan, probabilities, segmentDuration, resultFile, GUI):
 		GUI.playLabel.setText("Scanning...")
-		playing = True
+		self.audioFileBuffer = []
+		self.resultAudioObject = AudioSegment.empty()
+		self.playing = True
 		self.clip_duration = segmentDuration
 		self.probArray = probabilities
+		self.resultFile = resultFile
 		print("Scanning: " + MUSIC_FOLDER)
 		if rescan or not os.path.isfile('fileNames'):
 			self.musicPathsArray = self.readFiles(MUSIC_FOLDER)
@@ -153,4 +167,3 @@ class SnipSnap(QtCore.QObject):
 
 	def stop(self):
 		self.playing = False
-		self.audioFileBuffer = []
