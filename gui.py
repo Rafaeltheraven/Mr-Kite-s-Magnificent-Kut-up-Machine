@@ -6,6 +6,7 @@ from main import SnipSnap
 import pickle
 from os.path import isfile, expanduser
 from threading import Thread
+from functools import partial
 
 
 repeatProb = 5
@@ -34,8 +35,10 @@ class GUI(QWidget):
 		self.rescan = False
 		self.resultFile = ""
 		self.snip = SnipSnap()
+		self.labels = []
 		self.snip.NoMusicFoundSignal.connect(self.noMusicWarning)
 		self.snip.MissingDependencySignal.connect(self.dependencyWarning)
+		self.snip.ChangeLabelSignal.connect(self.changeState)
 		self.initUI()
 
 	def initUI(self):
@@ -140,7 +143,7 @@ class GUI(QWidget):
 			self.rescan = True
 		if self.directory != "":
 			self.playLabel.setText("Scanning music folder")
-			scannerThread = Thread(target=self.snip.start, args=(self.directory, self.rescan, self.probabilities, self.segmentSlider.value(), self.resultFile, self,))
+			scannerThread = Thread(target=self.snip.start, args=(self.directory, self.rescan, self.probabilities, self.segmentSlider.value(), self.resultFile,))
 			scannerThread.start()
 		else:
 			QMessageBox.about(self, "Error", "You haven't selected your music directory")
@@ -197,8 +200,8 @@ class GUI(QWidget):
 			currentSlider.setMaximum(100)
 			currentSlider.setMinimum(0)
 			currentSlider.setValue(self.probabilities[i])
-			currentSlider.valueChanged.connect(lambda: self.probLabel(i))
-			currentSlider.sliderReleased.connect(lambda: self.setProb(i))
+			currentSlider.valueChanged.connect(partial(self.probLabel, i))
+			currentSlider.sliderReleased.connect(partial(self.setProb, i))
 			currentLabel = self.labels[i]
 			currentLabel.setText(self.names[i] + " Probability: " + str(currentSlider.value()))
 			self.layout.addWidget(currentSlider, i + 7, 0)
@@ -212,13 +215,17 @@ class GUI(QWidget):
 		currentLabel.setText(self.names[index] + " Probability: " + str(currentSlider.value()))
 
 	def setProb(self, index):
-		probabilities[index] = self.sliders[index].value()
+		self.probabilities[index] = self.sliders[index].value()
 		
 	def segmentChanged(self):
 		self.segmentLabel.setText("Max Segment Duration: " + str(self.segmentSlider.value()))
 
 	def segmentReleased(self):
 		self.segmentDuration = self.segmentSlider.value()
+
+	def changeState(self, text):
+		self.playLabel.setText(text)
+
 
 if __name__ == '__main__':
 

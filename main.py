@@ -6,13 +6,14 @@ import pickle
 import random
 import os
 import fleep
-from threading import Thread
+from threading import Thread, Timer
 from PyQt5 import QtCore
 
 class SnipSnap(QtCore.QObject):
 
 	NoMusicFoundSignal = QtCore.pyqtSignal()
 	MissingDependencySignal = QtCore.pyqtSignal()
+	ChangeLabelSignal = QtCore.pyqtSignal(object)
 
 	def __init__(self):
 		QtCore.QObject.__init__(self)
@@ -23,23 +24,27 @@ class SnipSnap(QtCore.QObject):
 		self.playing = True
 		self.resultFile = ""
 		self.resultAudioObject = AudioSegment.empty()
+		self.bufferPointer = 0
 
-	def playAudio(self, GUI):
-		i = 0
-		while self.playing:
-			if (len(self.audioFileBuffer) - i < 5):
+	def playAudio(self):
+		if self.playing:
+			if (len(self.audioFileBuffer) - self.bufferPointer < 5):
 				print("More buffer")
 				bufferThread = Thread(target=self.prepareNextTrackLooped, args=(5,))
 				bufferThread.start()
+			audioFile = self.audioFileBuffer[self.bufferPointer]
+			self.bufferPointer += 1
+			newThread = Timer((len(audioFile) - 200) / 1000, self.playAudio)
+			newThread.start()
 			print("Playing next track")
-			play(self.audioFileBuffer[i])
+			play(audioFile)
 			if self.resultFile != "":
-				self.resultAudioObject += self.audioFileBuffer[i]
-			i += 1
-		if self.resultFile != "":
-			GUI.playLabel.setText("Writing to disk...")
-			self.writeToDisk()
-		GUI.playLabel.setText("Stopped")
+				self.resultAudioObject += audioFile
+		if not self.playing:
+			if self.resultFile != "":
+				self.ChangeLabelSignal.emit("Writing to disk...")
+				self.writeToDisk()
+			self.ChangeLabelSignal.emit("Stopped")
 
 	def writeToDisk(self):
 		fileFormat = os.path.splitext(self.resultFile)[1]
@@ -128,6 +133,9 @@ class SnipSnap(QtCore.QObject):
 		if random.randint(0, 101) < self.probArray[8]:
 			#Look into this later
 			print("should be doing lower quality")
+			track.set_sample_width(1)
+			track.set_channels(1)
+			track.set_frame_rate(11025)
 		if random.randint(0, 101) < self.probArray[9] and len(track) > 150:
 			print("adding speed effect")
 			speed = round(random.uniform(1, 2), 2)
@@ -136,8 +144,8 @@ class SnipSnap(QtCore.QObject):
 		return track
 
 
-	def start(self, MUSIC_FOLDER, rescan, probabilities, segmentDuration, resultFile, GUI):
-		GUI.playLabel.setText("Scanning...")
+	def start(self, MUSIC_FOLDER, rescan, probabilities, segmentDuration, resultFile):
+		self.ChangeLabelSignal.emit("Scanning...")
 		self.audioFileBuffer = []
 		self.resultAudioObject = AudioSegment.empty()
 		self.playing = True
@@ -159,11 +167,10 @@ class SnipSnap(QtCore.QObject):
 				pickle.dump(self.musicPathsArray, fp)
 		elif len(self.musicPathsArray) == 0:
 			self.NoMusicFoundSignal.emit()
-		GUI.playLabel.setText("Preparing...")
+		self.ChangeLabelSignal.emit("Preparing...")
 		self.prepareNextTrackLooped(5)
-		GUI.playLabel.setText("Playing")
-		playerThread = Thread(target=self.playAudio, args=(GUI, ))
-		playerThread.start()
+		self.ChangeLabelSignal.emit("Playing")
+		self.playAudio()
 
 	def stop(self):
 		self.playing = False
