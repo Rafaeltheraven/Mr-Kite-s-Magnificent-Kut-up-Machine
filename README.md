@@ -3,10 +3,18 @@ Mr Kite's Magnificent Kut-up Machine (MKMKM) is a python program that creates a 
 Start the program by running `python gui.py`. There are a couple of requirements though.
 
 MKMKM requires: 
-* PyQt5
-* pickle
-* fleep
-* pydub
-* FFMPEG OR LibAv.
+* PyQt5 (UI)
+* pickle (Saving paths to music)
+* fleep (Check file type)
+* pydub (Manipulating audio)
+* FFMPEG OR LibAv (Pydub requirement)
+* eyed3 (Checking tags for mp3)
+* mutagen (Checking tags for other files)
+
+If you are noticing errors in playback it is recommended to install one of the following
+* simpleaudio
+* pyaudio
+
+This is (seemingly) an FFMPEG bug with Windows permissions. Installing one of the above modules will change the way playback is done to circumvent this.
 
 Best experienced by using an Audio visualizer like Milkdrop2
