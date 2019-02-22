@@ -13,6 +13,7 @@ MKMKM requires:
 If you are noticing errors in playback it is recommended to install one of the following
 * simpleaudio
 * pyaudio
+
 This is (seemingly) an FFMPEG bug with Windows permissions. Installing one of the above modules will change the way playback is done to circumvent this.
 
 Best experienced by using an Audio visualizer like Milkdrop2
